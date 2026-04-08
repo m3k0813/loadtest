@@ -1,0 +1,215 @@
+# Chaos Engineering 시나리오
+# 사전 조건: Chaos Mesh 설치
+# helm install chaos-mesh chaos-mesh/chaos-mesh -n chaos-mesh --create-namespace
+
+---
+# 1. Queue Service Pod Kill
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata:
+  name: queue-service-pod-kill
+  namespace: chaos-mesh
+spec:
+  action: pod-kill
+  mode: fixed
+  value: "1"  # 한 번에 1개 Pod만 kill
+  selector:
+    namespaces:
+      - default
+    labelSelectors:
+      app: queue-service
+  scheduler:
+    cron: "@every 5m"
+  duration: "30s"
+---
+# 2. Ticketing Service Pod Kill
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata:
+  name: ticketing-service-pod-kill
+  namespace: chaos-mesh
+spec:
+  action: pod-kill
+  mode: fixed-percent
+  value: "30"  # 30% Pod kill
+  selector:
+    namespaces:
+      - default
+    labelSelectors:
+      app: ticketing-service
+  scheduler:
+    cron: "@every 10m"
+  duration: "1m"
+---
+# 3. Redis 네트워크 지연
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: redis-network-delay
+  namespace: chaos-mesh
+spec:
+  action: delay
+  mode: all
+  selector:
+    namespaces:
+      - default
+    labelSelectors:
+      app: redis
+  delay:
+    latency: "100ms"
+    correlation: "50"
+    jitter: "50ms"
+  duration: "5m"
+  direction: both
+---
+# 4. Database 네트워크 파티션
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: database-network-partition
+  namespace: chaos-mesh
+spec:
+  action: partition
+  mode: all
+  selector:
+    namespaces:
+      - default
+    labelSelectors:
+      app: postgres
+  direction: both
+  duration: "30s"
+  externalTargets:
+    - ticketing-service
+    - queue-service
+---
+# 5. Queue Service CPU Stress
+apiVersion: chaos-mesh.org/v1alpha1
+kind: StressChaos
+metadata:
+  name: queue-service-cpu-stress
+  namespace: chaos-mesh
+spec:
+  mode: one
+  selector:
+    namespaces:
+      - default
+    labelSelectors:
+      app: queue-service
+  stressors:
+    cpu:
+      workers: 2
+      load: 80  # 80% CPU 부하
+  duration: "10m"
+---
+# 6. Ticketing Service Memory Stress
+apiVersion: chaos-mesh.org/v1alpha1
+kind: StressChaos
+metadata:
+  name: ticketing-service-memory-stress
+  namespace: chaos-mesh
+spec:
+  mode: one
+  selector:
+    namespaces:
+      - default
+    labelSelectors:
+      app: ticketing-service
+  stressors:
+    memory:
+      workers: 1
+      size: "256MB"  # 256MB 메모리 할당
+  duration: "10m"
+---
+# 7. Kafka Broker Pod Failure
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata:
+  name: kafka-broker-failure
+  namespace: chaos-mesh
+spec:
+  action: pod-failure
+  mode: fixed
+  value: "1"
+  selector:
+    namespaces:
+      - default
+    labelSelectors:
+      app: kafka
+  duration: "2m"
+---
+# 8. Gateway Service HTTP Abort (에러 주입)
+apiVersion: chaos-mesh.org/v1alpha1
+kind: HTTPChaos
+metadata:
+  name: gateway-http-abort
+  namespace: chaos-mesh
+spec:
+  mode: all
+  selector:
+    namespaces:
+      - default
+    labelSelectors:
+      app: gateway-service
+  target: Request
+  port: 8080
+  path: "/api/*"
+  abort: true
+  duration: "1m"
+  scheduler:
+    cron: "@every 15m"
+---
+# 9. Workflow: 복합 장애 시나리오
+apiVersion: chaos-mesh.org/v1alpha1
+kind: Workflow
+metadata:
+  name: complex-failure-scenario
+  namespace: chaos-mesh
+spec:
+  entry: the-entry
+  templates:
+    - name: the-entry
+      templateType: Serial
+      deadline: 30m
+      children:
+        - workflow-pod-kill
+        - workflow-network-delay
+        - workflow-cpu-stress
+    - name: workflow-pod-kill
+      templateType: PodChaos
+      deadline: 5m
+      podChaos:
+        action: pod-kill
+        mode: one
+        selector:
+          namespaces:
+            - default
+          labelSelectors:
+            app: queue-service
+    - name: workflow-network-delay
+      templateType: NetworkChaos
+      deadline: 10m
+      networkChaos:
+        action: delay
+        mode: all
+        selector:
+          namespaces:
+            - default
+          labelSelectors:
+            app: redis
+        delay:
+          latency: "200ms"
+          jitter: "100ms"
+    - name: workflow-cpu-stress
+      templateType: StressChaos
+      deadline: 10m
+      stressChaos:
+        mode: one
+        selector:
+          namespaces:
+            - default
+          labelSelectors:
+            app: ticketing-service
+        stressors:
+          cpu:
+            workers: 2
+            load: 90

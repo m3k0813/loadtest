@@ -1,0 +1,29 @@
+{
+  "name": "truve-load-tests",
+  "version": "1.0.0",
+  "description": "Truve 뮤지컬 티켓팅 플랫폼 부하 테스트",
+  "scripts": {
+    "test:baseline": "./run-local.sh baseline local",
+    "test:queue": "./run-local.sh queue local",
+    "test:ticketing": "./run-local.sh ticketing local",
+    "test:e2e": "./run-local.sh e2e local",
+    "test:all": "./run-local.sh all local",
+    "test:staging": "./run-local.sh e2e staging",
+    "test:production": "./run-local.sh e2e production",
+    "k8s:setup": "./run-k8s.sh setup",
+    "k8s:deploy": "./run-k8s.sh deploy all",
+    "k8s:start": "./run-k8s.sh start all",
+    "k8s:stop": "./run-k8s.sh stop all",
+    "k8s:status": "./run-k8s.sh status",
+    "k8s:delete": "./run-k8s.sh delete",
+    "chaos:deploy": "./run-k8s.sh chaos"
+  },
+  "keywords": [
+    "k6",
+    "load-testing",
+    "performance-testing",
+    "kubernetes"
+  ],
+  "author": "Truve Team",
+  "license": "MIT"
+}

@@ -1,0 +1,220 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: load-test
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: k6-env-config
+  namespace: load-test
+data:
+  BASE_URL: "https://gateway.truve.site"
+  TEST_SHOW_ID: "show-12345"
+  TEST_SHOW_SCHEDULE_ID: "123"
+  K6_OUT: "influxdb=http://influxdb.monitoring.svc.cluster.local:8086/k6"
+  K6_PROMETHEUS_RW_SERVER_URL: "http://prometheus-operated.monitoring.svc.cluster.local:9090/api/v1/write"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k6-distributed-baseline
+  namespace: load-test
+  labels:
+    app: k6-load-test
+    scenario: baseline
+spec:
+  replicas: 5  # 분산 부하 생성기
+  selector:
+    matchLabels:
+      app: k6-load-test
+      scenario: baseline
+  template:
+    metadata:
+      labels:
+        app: k6-load-test
+        scenario: baseline
+    spec:
+      containers:
+      - name: k6
+        image: grafana/k6:latest
+        command: ["k6", "run", "/scripts/01-baseline.js"]
+        envFrom:
+        - configMapRef:
+            name: k6-env-config
+        volumeMounts:
+        - name: scripts
+          mountPath: /scripts
+          readOnly: true
+        - name: results
+          mountPath: /results
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+          limits:
+            cpu: "1000m"
+            memory: "1Gi"
+      volumes:
+      - name: scripts
+        hostPath:
+          path: /Users/minjeongjun/projects/truve/load-tests/scenarios
+          type: Directory
+      - name: results
+        hostPath:
+          path: /Users/minjeongjun/projects/truve/load-tests/results
+          type: DirectoryOrCreate
+      restartPolicy: Always
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k6-distributed-queue-spike
+  namespace: load-test
+  labels:
+    app: k6-load-test
+    scenario: queue-spike
+spec:
+  replicas: 10  # Queue spike는 더 많은 부하 생성기 필요
+  selector:
+    matchLabels:
+      app: k6-load-test
+      scenario: queue-spike
+  template:
+    metadata:
+      labels:
+        app: k6-load-test
+        scenario: queue-spike
+    spec:
+      containers:
+      - name: k6
+        image: grafana/k6:latest
+        command: ["k6", "run", "/scripts/02-queue-spike.js"]
+        envFrom:
+        - configMapRef:
+            name: k6-env-config
+        volumeMounts:
+        - name: scripts
+          mountPath: /scripts
+          readOnly: true
+        - name: results
+          mountPath: /results
+        resources:
+          requests:
+            cpu: "1000m"
+            memory: "1Gi"
+          limits:
+            cpu: "2000m"
+            memory: "2Gi"
+      volumes:
+      - name: scripts
+        hostPath:
+          path: /Users/minjeongjun/projects/truve/load-tests/scenarios
+          type: Directory
+      - name: results
+        hostPath:
+          path: /Users/minjeongjun/projects/truve/load-tests/results
+          type: DirectoryOrCreate
+      restartPolicy: Always
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k6-distributed-ticketing
+  namespace: load-test
+  labels:
+    app: k6-load-test
+    scenario: ticketing
+spec:
+  replicas: 8
+  selector:
+    matchLabels:
+      app: k6-load-test
+      scenario: ticketing
+  template:
+    metadata:
+      labels:
+        app: k6-load-test
+        scenario: ticketing
+    spec:
+      containers:
+      - name: k6
+        image: grafana/k6:latest
+        command: ["k6", "run", "/scripts/03-ticketing-concurrency.js"]
+        envFrom:
+        - configMapRef:
+            name: k6-env-config
+        volumeMounts:
+        - name: scripts
+          mountPath: /scripts
+          readOnly: true
+        - name: results
+          mountPath: /results
+        resources:
+          requests:
+            cpu: "750m"
+            memory: "768Mi"
+          limits:
+            cpu: "1500m"
+            memory: "1536Mi"
+      volumes:
+      - name: scripts
+        hostPath:
+          path: /Users/minjeongjun/projects/truve/load-tests/scenarios
+          type: Directory
+      - name: results
+        hostPath:
+          path: /Users/minjeongjun/projects/truve/load-tests/results
+          type: DirectoryOrCreate
+      restartPolicy: Always
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k6-distributed-e2e
+  namespace: load-test
+  labels:
+    app: k6-load-test
+    scenario: e2e
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: k6-load-test
+      scenario: e2e
+  template:
+    metadata:
+      labels:
+        app: k6-load-test
+        scenario: e2e
+    spec:
+      containers:
+      - name: k6
+        image: grafana/k6:latest
+        command: ["k6", "run", "/scripts/04-e2e-flow.js"]
+        envFrom:
+        - configMapRef:
+            name: k6-env-config
+        volumeMounts:
+        - name: scripts
+          mountPath: /scripts
+          readOnly: true
+        - name: results
+          mountPath: /results
+        resources:
+          requests:
+            cpu: "1000m"
+            memory: "1Gi"
+          limits:
+            cpu: "2000m"
+            memory: "2Gi"
+      volumes:
+      - name: scripts
+        hostPath:
+          path: /Users/minjeongjun/projects/truve/load-tests/scenarios
+          type: Directory
+      - name: results
+        hostPath:
+          path: /Users/minjeongjun/projects/truve/load-tests/results
+          type: DirectoryOrCreate
+      restartPolicy: Always

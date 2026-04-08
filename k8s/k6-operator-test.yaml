@@ -1,0 +1,113 @@
+# k6 Operator를 사용한 테스트 정의
+# 사전 조건: kubectl apply -f https://github.com/grafana/k6-operator/releases/latest/download/bundle.yaml
+
+---
+apiVersion: k6.io/v1alpha1
+kind: K6
+metadata:
+  name: baseline-test
+  namespace: load-test
+spec:
+  parallelism: 5
+  script:
+    configMap:
+      name: k6-baseline-script
+      file: test.js
+  arguments: --out json=results.json
+  runner:
+    image: grafana/k6:latest
+    env:
+      - name: BASE_URL
+        value: "https://gateway.truve.site"
+      - name: TEST_SHOW_ID
+        value: "show-12345"
+      - name: TEST_SHOW_SCHEDULE_ID
+        value: "123"
+    resources:
+      requests:
+        cpu: 500m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: k6-baseline-script
+  namespace: load-test
+data:
+  test.js: |
+    import http from 'k6/http';
+    import { check, sleep } from 'k6';
+
+    export const options = {
+      stages: [
+        { duration: '2m', target: 50 },
+        { duration: '5m', target: 100 },
+        { duration: '3m', target: 0 },
+      ],
+    };
+
+    export default function() {
+      const BASE_URL = __ENV.BASE_URL || 'https://gateway.truve.site';
+      const res = http.get(`${BASE_URL}/api/musical/home`);
+      check(res, { 'status is 200': (r) => r.status === 200 });
+      sleep(1);
+    }
+---
+apiVersion: k6.io/v1alpha1
+kind: K6
+metadata:
+  name: queue-spike-test
+  namespace: load-test
+spec:
+  parallelism: 10
+  script:
+    configMap:
+      name: k6-queue-spike-script
+      file: test.js
+  arguments: --out json=results.json --out influxdb=http://influxdb.monitoring:8086/k6
+  runner:
+    image: grafana/k6:latest
+    env:
+      - name: BASE_URL
+        value: "https://gateway.truve.site"
+      - name: TEST_SHOW_ID
+        value: "show-12345"
+    resources:
+      requests:
+        cpu: 1000m
+        memory: 1Gi
+      limits:
+        cpu: 2000m
+        memory: 2Gi
+---
+apiVersion: k6.io/v1alpha1
+kind: K6
+metadata:
+  name: e2e-flow-test
+  namespace: load-test
+spec:
+  parallelism: 10
+  script:
+    configMap:
+      name: k6-e2e-script
+      file: test.js
+  arguments: --out json=results.json
+  runner:
+    image: grafana/k6:latest
+    env:
+      - name: BASE_URL
+        value: "https://gateway.truve.site"
+      - name: TEST_SHOW_ID
+        value: "show-12345"
+      - name: TEST_SHOW_SCHEDULE_ID
+        value: "123"
+    resources:
+      requests:
+        cpu: 1000m
+        memory: 1Gi
+      limits:
+        cpu: 2000m
+        memory: 2Gi
