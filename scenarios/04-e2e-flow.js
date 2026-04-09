@@ -429,7 +429,7 @@ export function handleSummary(data) {
 
   return {
     'stdout': textSummary(data, { indent: ' ', enableColors: true }),
-    '/Users/minjeongjun/projects/truve/load-tests/results/04-e2e-flow-summary.json': JSON.stringify(data, null, 2),
-    '/Users/minjeongjun/projects/truve/load-tests/results/04-e2e-flow-metrics.json': JSON.stringify(e2eMetrics, null, 2),
+    'results/04-e2e-flow-summary.json': JSON.stringify(data, null, 2),
+    'results/04-e2e-flow-metrics.json': JSON.stringify(e2eMetrics, null, 2),
   };
 }

@@ -176,7 +176,7 @@ export function handleSummary(data) {
 
   return {
     'stdout': textSummary(data, { indent: ' ', enableColors: true }),
-    '/Users/minjeongjun/projects/truve/load-tests/results/02-queue-spike-summary.json': JSON.stringify(data, null, 2),
-    '/Users/minjeongjun/projects/truve/load-tests/results/02-queue-spike-metrics.json': JSON.stringify(queueMetrics, null, 2),
+    'results/02-queue-spike-summary.json': JSON.stringify(data, null, 2),
+    'results/02-queue-spike-metrics.json': JSON.stringify(queueMetrics, null, 2),
   };
 }

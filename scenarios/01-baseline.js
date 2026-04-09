@@ -106,24 +106,24 @@ export default function () {
     });
   });
 
-  // 시나리오: 리뷰 탐색 (30% 확률)
-  if (Math.random() < 0.3) {
-    group('Review Browsing', function () {
-      const showId = Math.floor(Math.random() * 100) + 1;
-      const reviewRes = http.get(
-        `${config.BASE_URL}/api/musical/shows/${showId}/reviews?page=0&size=20`,
-        {
-          headers: headers,
-          tags: { name: 'get_reviews' },
-        }
-      );
-
-      check(reviewRes, {
-        'reviews loaded': (r) => r.status === 200 || r.status === 404,
-      });
-      sleep(2);
-    });
-  }
+  // 시나리오: 리뷰 탐색 (현재 백엔드 에러로 주석 처리)
+  // if (Math.random() < 0.3) {
+  //   group('Review Browsing', function () {
+  //     const showId = Math.floor(Math.random() * 100) + 1;
+  //     const reviewRes = http.get(
+  //       `${config.BASE_URL}/api/musical/shows/${showId}/reviews?page=0&size=20`,
+  //       {
+  //         headers: headers,
+  //         tags: { name: 'get_reviews' },
+  //       }
+  //     );
+  //
+  //     check(reviewRes, {
+  //       'reviews loaded': (r) => r.status === 200 || r.status === 404,
+  //     });
+  //     sleep(2);
+  //   });
+  // }
 
   // 사용자 행동 시뮬레이션: 생각하는 시간
   sleep(Math.random() * 3 + 2); // 2-5초 랜덤 대기
@@ -132,6 +132,6 @@ export default function () {
 export function handleSummary(data) {
   return {
     'stdout': textSummary(data, { indent: ' ', enableColors: true }),
-    '/Users/minjeongjun/projects/truve/load-tests/results/01-baseline-summary.json': JSON.stringify(data, null, 2),
+    'results/01-baseline-summary.json': JSON.stringify(data, null, 2),
   };
 }

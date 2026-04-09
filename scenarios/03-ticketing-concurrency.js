@@ -275,7 +275,7 @@ export function handleSummary(data) {
 
   return {
     'stdout': textSummary(data, { indent: ' ', enableColors: true }),
-    '/Users/minjeongjun/projects/truve/load-tests/results/03-ticketing-concurrency-summary.json': JSON.stringify(data, null, 2),
-    '/Users/minjeongjun/projects/truve/load-tests/results/03-ticketing-concurrency-metrics.json': JSON.stringify(ticketingMetrics, null, 2),
+    'results/03-ticketing-concurrency-summary.json': JSON.stringify(data, null, 2),
+    'results/03-ticketing-concurrency-metrics.json': JSON.stringify(ticketingMetrics, null, 2),
   };
 }
