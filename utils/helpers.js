@@ -63,12 +63,17 @@ export function safeRequest(http, method, url, body, params, retries = 3) {
 }
 
 // 대기열 폴링 헬퍼
-export function pollQueueStatus(http, baseUrl, showId, userId, maxAttempts = 60, intervalMs = 5000) {
+export function pollQueueStatus(http, baseUrl, showId, userId, maxAttempts = 60, intervalMs = 5000, jwtToken = null) {
   const startTime = Date.now();
 
   for (let i = 0; i < maxAttempts; i++) {
+    const headers = { 'X-User-Id': userId };
+    if (jwtToken) {
+      headers['Authorization'] = `Bearer ${jwtToken}`;
+    }
+
     const response = http.get(`${baseUrl}/api/queue/${showId}/status`, {
-      headers: { 'X-User-Id': userId },
+      headers: headers,
       tags: { name: 'queue_status_polling' },
     });
 

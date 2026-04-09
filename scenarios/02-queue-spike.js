@@ -17,6 +17,7 @@ import {
   queueEnterCounter,
   queueWaitTime,
 } from '../utils/helpers.js';
+import { generateJWT } from '../utils/jwt.js';
 
 // 테스트 옵션 - 급격한 트래픽 증가 시뮬레이션
 export const options = {
@@ -92,13 +93,20 @@ export function queueSpikeScenario() {
   const userId = uuidv4();
   const showId = config.TEST_SHOW_ID;
 
+  // JWT 토큰 생성
+  const jwtSecret = __ENV.JWT_SECRET || 'kt-cloud-tech-up-final-project-2026020201010101';
+  const token = generateJWT(userId, jwtSecret);
+
   group('Queue Entry Spike', function () {
     // 1. 대기열 진입
     const enterRes = http.post(
       `${config.BASE_URL}/api/queue/${showId}/enter`,
       null,
       {
-        headers: { 'X-User-Id': userId },
+        headers: {
+          'X-User-Id': userId,
+          'Authorization': `Bearer ${token}`
+        },
         tags: { name: 'queue_enter' },
         timeout: '10s',
       }
@@ -127,7 +135,8 @@ export function queueSpikeScenario() {
         showId,
         userId,
         10, // 최대 10회만 시도 (spike 테스트이므로 짧게)
-        5000
+        5000,
+        token  // JWT 토큰 전달
       );
 
       if (queueResult.success) {
@@ -140,7 +149,10 @@ export function queueSpikeScenario() {
       const checkCount = Math.random() < 0.5 ? 1 : 2;
       for (let i = 0; i < checkCount; i++) {
         const statusRes = http.get(`${config.BASE_URL}/api/queue/${showId}/status`, {
-          headers: { 'X-User-Id': userId },
+          headers: {
+            'X-User-Id': userId,
+            'Authorization': `Bearer ${token}`
+          },
           tags: { name: 'queue_status_polling' },
         });
 
