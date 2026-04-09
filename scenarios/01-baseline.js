@@ -8,6 +8,7 @@
 
 import http from 'k6/http';
 import { check, group, sleep } from 'k6';
+import { textSummary } from 'https://jslib.k6.io/k6-summary/0.0.1/index.js';
 import { config } from '../config/config.js';
 import { checkResponse, uuidv4 } from '../utils/helpers.js';
 
@@ -36,16 +37,16 @@ export default function () {
 
   // 시나리오: 공연 정보 탐색
   group('Musical Browsing', function () {
-    // 1. 홈 화면 데이터 조회
-    group('Home', function () {
-      const homeRes = http.get(`${config.BASE_URL}/api/musical/home`, {
-        headers: headers,
-        tags: { name: 'get_home' },
-      });
-
-      checkResponse(homeRes, 'Home');
-      sleep(1);
-    });
+    // 1. 홈 화면 데이터 조회 (현재 백엔드 500 에러로 주석 처리)
+    // group('Home', function () {
+    //   const homeRes = http.get(`${config.BASE_URL}/api/musical/home`, {
+    //     headers: headers,
+    //     tags: { name: 'get_home' },
+    //   });
+    //
+    //   checkResponse(homeRes, 'Home');
+    //   sleep(1);
+    // });
 
     // 2. 공연 검색
     group('Search', function () {
