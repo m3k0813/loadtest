@@ -63,9 +63,10 @@ export default function () {
       sleep(1);
     });
 
-    // 3. 공연 상세 조회
+    // 3. 공연 상세 조회 (실제 존재하는 ID만 사용)
     group('Show Detail', function () {
-      const showId = Math.floor(Math.random() * 100) + 1; // 1-100 랜덤 공연 ID
+      const showIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]; // 실제 공연 ID
+      const showId = showIds[Math.floor(Math.random() * showIds.length)];
       const detailRes = http.get(`${config.BASE_URL}/api/musical/shows/${showId}`, {
         headers: headers,
         tags: { name: 'get_show_detail' },
@@ -91,9 +92,10 @@ export default function () {
       }
     });
 
-    // 4. 아티스트 조회
+    // 4. 아티스트 조회 (실제 존재하는 ID만 사용)
     group('Artist', function () {
-      const artistId = Math.floor(Math.random() * 50) + 1;
+      const artistIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; // 실제 아티스트 ID
+      const artistId = artistIds[Math.floor(Math.random() * artistIds.length)];
       const artistRes = http.get(`${config.BASE_URL}/api/musical/artists/${artistId}`, {
         headers: headers,
         tags: { name: 'get_artist' },
