@@ -1,5 +1,5 @@
 import encoding from 'k6/encoding';
-import { crypto } from 'k6/crypto';
+import crypto from 'k6/crypto';
 
 /**
  * JWT 토큰 생성 함수
